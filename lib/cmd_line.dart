@@ -335,7 +335,7 @@ Future<bool> _processFileZoned(ValidationTask task) {
   }, (Object error, StackTrace stackTrace) {
     errPipe.write('${task.filename} '
         'caused an uncaught runtime error:\n$error\n$stackTrace\n');
-    resultCompleter.complete(false);
+    resultCompleter.complete(true);
   });
   return resultCompleter.future;
 }

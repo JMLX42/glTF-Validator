@@ -12,6 +12,10 @@
 
 * Changed `NODE_SKINNED_MESH_NON_ROOT` default severity to Information.
 
+### Bugfixes
+
+* Fixed missing `NODE_MATRIX_NON_TRS` error for sheared matrices with a translation, and false positive `NODE_MATRIX_NON_TRS` error for some rotated matrices with a large scale.
+
 ### Integration updates
 
 * CLI tool now outputs assets with errors in sorted order when validating a directory.

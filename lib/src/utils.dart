@@ -709,10 +709,11 @@ double doubleToSingle(double value) {
   return _float[0];
 }
 
-final _matrix = Matrix4.zero();
-final _translation = Vector3.zero();
-final _rotation = Quaternion.identity();
-final _scale = Vector3.zero();
+/// Checks the conditions of the glTF 2.0 specification, section
+/// "Transformations": the last row is (0, 0, 0, 1), none of the first three
+/// columns is all zeros, and the absolute value of the determinant of the
+/// upper-left 3x3 matrix with normalized columns is close to one. The
+/// translation column takes no part in them.
 bool isTrsDecomposable(Matrix4 matrix) {
   if (matrix[3] != 0.0 ||
       matrix[7] != 0.0 ||
@@ -721,13 +722,26 @@ bool isTrsDecomposable(Matrix4 matrix) {
     return false;
   }
 
-  if (matrix.determinant() == 0.0) {
+  final lengthX = _columnLength(matrix, 0);
+  final lengthY = _columnLength(matrix, 1);
+  final lengthZ = _columnLength(matrix, 2);
+  if (lengthX == 0.0 || lengthY == 0.0 || lengthZ == 0.0) {
     return false;
   }
 
-  matrix.decompose(_translation, _rotation, _scale);
-  _matrix.setFromTranslationRotationScale(_translation, _rotation, _scale);
-  return _matrix.absoluteError(matrix) < 0.00005;
+  // With the last row checked above, the 4x4 determinant is the determinant of
+  // the upper-left 3x3 matrix. A shear `s` makes the normalized determinant
+  // 1 / sqrt(1 + s^2), about 1 - s^2 / 2, so the threshold accepts shears up to
+  // about 1e-4 on unit-length columns.
+  final determinant = matrix.determinant() / (lengthX * lengthY * lengthZ);
+  return (determinant.abs() - 1.0).abs() < 5e-9;
+}
+
+double _columnLength(Matrix4 matrix, int column) {
+  final x = matrix[column * 4];
+  final y = matrix[column * 4 + 1];
+  final z = matrix[column * 4 + 2];
+  return sqrt(x * x + y * y + z * z);
 }
 
 bool isPot(int value) => (value != 0) && (value & (value - 1) == 0);

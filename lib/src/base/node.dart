@@ -233,15 +233,22 @@ class Node extends GltfChildOfRootProperty {
     }
   }
 
-  void addScene(Scene scene) => _addScene(scene, <Node>{});
-
-  void _addScene(Scene scene, Set<Node> seenNodes) {
-    _scenes.add(scene);
-    if (_children == null || !seenNodes.add(this)) {
-      return;
-    }
-    for (final node in children) {
-      node?._addScene(scene, seenNodes);
+  // Iterative rather than recursive, so that a deep hierarchy cannot overflow
+  // the stack.
+  void addScene(Scene scene) {
+    final seenNodes = <Node>{};
+    final pendingNodes = <Node>[this];
+    while (pendingNodes.isNotEmpty) {
+      final node = pendingNodes.removeLast();
+      node._scenes.add(scene);
+      if (node._children == null || !seenNodes.add(node)) {
+        continue;
+      }
+      for (final child in node._children) {
+        if (child != null) {
+          pendingNodes.add(child);
+        }
+      }
     }
   }
 }

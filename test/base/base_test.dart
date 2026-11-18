@@ -15,6 +15,7 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -479,6 +480,32 @@ Future main() async {
       expect(scene.extensions, isEmpty);
 
       expect(gltf.scene, scene);
+    });
+
+    test('Deep node hierarchy', () async {
+      // Deep enough to overflow the stack if the hierarchy were walked
+      // recursively. Validation is off because the node loop check takes time
+      // quadratic in the depth.
+      const depth = 100000;
+      final json = jsonEncode({
+        'asset': {'version': '2.0'},
+        'scenes': [
+          {
+            'nodes': [0]
+          }
+        ],
+        'nodes': List<Map<String, Object>>.generate(
+            depth,
+            (i) => {
+                  if (i < depth - 1) 'children': [i + 1]
+                }),
+      });
+      final gltf = (await GltfJsonReader(
+                  Stream.value(utf8.encode(json)), Context(validate: false))
+              .read())
+          .gltf;
+
+      expect(gltf.nodes[depth - 1].scenes, [gltf.scenes[0]]);
     });
 
     test('Animation', () async {

@@ -12,6 +12,10 @@
 
 * Changed `NODE_SKINNED_MESH_NON_ROOT` default severity to Information.
 
+### Bugfixes
+
+* Fixed stack overflow on deep node hierarchies.
+
 ### Integration updates
 
 * CLI tool now outputs assets with errors in sorted order when validating a directory.
